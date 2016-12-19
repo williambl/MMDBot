@@ -2,7 +2,8 @@ package com.mcmoddev.bot.command;
 
 import java.util.Map.Entry;
 
-import com.mcmoddev.bot.util.Utilities;
+import com.mcmoddev.bot.handler.CommandHandler;
+import com.mcmoddev.bot.util.DiscordUtilities;
 
 import sx.blah.discord.handle.obj.IMessage;
 
@@ -19,14 +20,14 @@ public class CommandHelp implements Command {
                 final Command cmd = CommandHandler.getCommand(args[index]);
                 
                 if (cmd != null && cmd.isValidUsage(message))
-                    descriptions += CommandHandler.COMMAND_KEY + " " + args[index] + " - " + cmd.getDescription() + Utilities.SEPERATOR + Utilities.SEPERATOR;
+                    descriptions += CommandHandler.COMMAND_KEY + " " + args[index] + " - " + cmd.getDescription() + DiscordUtilities.SEPERATOR + DiscordUtilities.SEPERATOR;
             }
         else
             for (final Entry<String, Command> command : CommandHandler.getCommands().entrySet())
                 if (command.getValue().isValidUsage(message))
-                    descriptions += CommandHandler.COMMAND_KEY + " " + command.getKey() + " - " + command.getValue().getDescription() + Utilities.SEPERATOR + Utilities.SEPERATOR;
+                    descriptions += CommandHandler.COMMAND_KEY + " " + command.getKey() + " - " + command.getValue().getDescription() + DiscordUtilities.SEPERATOR + DiscordUtilities.SEPERATOR;
                 
-        Utilities.sendPrivateMessage(message.getAuthor(), Utilities.makeMultiCodeBlock(descriptions));
+        DiscordUtilities.sendPrivateMessage(message.getAuthor(), DiscordUtilities.makeMultiCodeBlock(descriptions));
     }
     
     @Override

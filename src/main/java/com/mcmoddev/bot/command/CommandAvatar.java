@@ -1,7 +1,7 @@
 package com.mcmoddev.bot.command;
 
 import com.mcmoddev.bot.MMDBot;
-import com.mcmoddev.bot.util.Utilities;
+import com.mcmoddev.bot.util.DiscordUtilities;
 
 import sx.blah.discord.handle.obj.IMessage;
 import sx.blah.discord.util.DiscordException;
@@ -17,12 +17,12 @@ public class CommandAvatar extends CommandAdmin {
             
             if (params.length == 3) {
                 
-                MMDBot.instance.changeAvatar(Image.forUrl(params[1], params[2]));
-                Utilities.sendMessage(message.getChannel(), "How do I look?");
+                MMDBot.INSTANCE.changeAvatar(Image.forUrl(params[1], params[2]));
+                DiscordUtilities.sendMessage(message.getChannel(), "How do I look?");
             }
             
             else
-                Utilities.sendMessage(message.getChannel(), "You must enter an extension and a valid url for this to work.");
+                DiscordUtilities.sendMessage(message.getChannel(), "You must enter an extension and a valid url for this to work.");
         }
         
         catch (DiscordException | RateLimitException e) {

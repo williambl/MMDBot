@@ -1,9 +1,6 @@
 package com.mcmoddev.bot.util;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -87,7 +84,7 @@ public class CurseData {
             
             catch (final Exception e) {
                 
-                if (e instanceof java.io.IOException && e.getMessage().contains("HTTP response code: 400") || e instanceof MalformedURLException || e instanceof FileNotFoundException && (e.getMessage().contains("https://minecraft.curseforge.com/not-found?404") || e.getMessage().contains("https://minecraft.curseforge.com/members/"))) {
+                if (e instanceof IOException && e.getMessage().contains("HTTP response code: 400") || e instanceof MalformedURLException || e instanceof FileNotFoundException && (e.getMessage().contains("https://minecraft.curseforge.com/not-found?404") || e.getMessage().contains("https://minecraft.curseforge.com/members/"))) {
                     
                     this.foundUser = false;
                     break;
@@ -116,7 +113,7 @@ public class CurseData {
                         final long projectDownloads = Long.parseLong(line.split(">")[1].split("<")[0].replaceAll(",", ""));
                         this.totalDownloads += projectDownloads;
                         final String name = projectUrl.replace("https://minecraft.curseforge.com/projects/", "").replaceAll("-", " ");
-                        
+
                         this.downloads.put("[" + name + "](" + projectUrl.replaceAll(" ", "-").replace("https://", "") + ")", projectDownloads);
                         break;
                     }
@@ -129,7 +126,7 @@ public class CurseData {
                 
                 e.printStackTrace();
             }
-        
+
         this.downloads = Utilities.sortByValue(this.downloads, true);
     }
     

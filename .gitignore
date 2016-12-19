@@ -1,6 +1,9 @@
 #Directories
 /build/
 /bin/
+/out/
+/.ideaDataSources/
+/dataSources/
 
 #Hidden Directories
 .gradle/

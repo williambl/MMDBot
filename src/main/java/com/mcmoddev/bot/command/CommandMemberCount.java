@@ -1,6 +1,6 @@
 package com.mcmoddev.bot.command;
 
-import com.mcmoddev.bot.util.Utilities;
+import com.mcmoddev.bot.util.DiscordUtilities;
 
 import sx.blah.discord.handle.obj.IGuild;
 import sx.blah.discord.handle.obj.IMessage;
@@ -15,26 +15,26 @@ public class CommandMemberCount implements Command {
         final IGuild guild = message.getGuild();
         
         if (guild != null) {
-            
-            final String base = String.format("There are %d people in the server :)", guild.getUsers().size());
-            
+
+            final String base = String.format("There are %d people in the server :)", guild.getTotalMemberCount());
+
             if (params.length == 2 && params[1].equalsIgnoreCase("roles")) {
-                
+
                 final StringBuilder builder = new StringBuilder();
-                
+
                 for (final IRole role : guild.getRoles())
-                    builder.append(String.format("%s: %d", role.getName().replaceAll("@", ""), guild.getUsersByRole(role).size()) + Utilities.SEPERATOR);
-                
+                    builder.append(String.format("%s: %d", role.getName().replaceAll("@", ""), guild.getUsersByRole(role).size()) + DiscordUtilities.SEPERATOR);
+
                 final EmbedBuilder embed = new EmbedBuilder();
                 embed.ignoreNullEmptyFields();
                 embed.withDesc(builder.toString());
                 embed.withColor((int) (Math.random() * 0x1000000));
-                
-                Utilities.sendMessage(message.getChannel(), base, embed.build());
+
+                DiscordUtilities.sendMessage(message.getChannel(), base, embed.build());
             }
-            
+
             else
-                Utilities.sendMessage(message.getChannel(), base);
+                DiscordUtilities.sendMessage(message.getChannel(), base);
         }
     }
     

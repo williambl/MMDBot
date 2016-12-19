@@ -1,6 +1,6 @@
 package com.mcmoddev.bot.command;
 
-import com.mcmoddev.bot.util.Utilities;
+import com.mcmoddev.bot.util.DiscordUtilities;
 
 import sx.blah.discord.handle.obj.IGuild;
 import sx.blah.discord.handle.obj.IMessage;
@@ -13,7 +13,7 @@ public class CommandServerInfo implements Command {
         final IGuild guild = message.getGuild();
         
         if (guild != null)
-            Utilities.sendMessage(message.getChannel(), Utilities.makeMultilineMessage("People: " + guild.getUsers().size(), "Channels: " + guild.getChannels().size(), "Creation Date: " + guild.getCreationDate().toString()));
+            DiscordUtilities.sendMessage(message.getChannel(), DiscordUtilities.makeMultilineMessage("People: " + guild.getTotalMemberCount(), "Channels: " + guild.getChannels().size(), "Creation Date: " + guild.getCreationDate().toString()));
     }
     
     @Override

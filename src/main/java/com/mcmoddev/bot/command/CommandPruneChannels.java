@@ -3,7 +3,7 @@ package com.mcmoddev.bot.command;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
-import com.mcmoddev.bot.util.Utilities;
+import com.mcmoddev.bot.util.DiscordUtilities;
 
 import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.handle.obj.IMessage;
@@ -17,7 +17,7 @@ public class CommandPruneChannels extends CommandAdmin {
         final LocalDateTime current = LocalDateTime.now();
         final int minDaysOfInactivity = params.length == 2 ? Integer.parseInt(params[1]) : 7;
         final StringBuilder builder = new StringBuilder();
-        
+
         for (final IChannel channel : message.getGuild().getChannels())
             try {
                 
@@ -28,22 +28,22 @@ public class CommandPruneChannels extends CommandAdmin {
                     final int daysSinceUsed = Math.toIntExact(ChronoUnit.DAYS.between(latest.getCreationDate(), current));
                     
                     if (daysSinceUsed >= minDaysOfInactivity)
-                        builder.append("#" + channel.getName() + " - " + daysSinceUsed + Utilities.SEPERATOR);
+                        builder.append("#" + channel.getName() + " - " + daysSinceUsed + DiscordUtilities.SEPERATOR);
                 }
             }
             
             catch (final ArrayIndexOutOfBoundsException e) {
-                
-                builder.append("#" + channel.getName() + " - unknown" + Utilities.SEPERATOR);
+
+                builder.append("#" + channel.getName() + " - unknown" + DiscordUtilities.SEPERATOR);
             }
-        
+
         final EmbedBuilder embed = new EmbedBuilder();
         embed.ignoreNullEmptyFields();
         embed.withDesc(builder.toString());
         embed.withColor((int) (Math.random() * 0x1000000));
         embed.withFooterText("How do you work");
-        
-        Utilities.sendMessage(message.getChannel(), "The following channels have not been used in " + minDaysOfInactivity + " days.", embed.build());
+
+        DiscordUtilities.sendMessage(message.getChannel(), "The following channels have not been used in " + minDaysOfInactivity + " days.", embed.build());
     }
     
     @Override

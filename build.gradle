@@ -2,7 +2,6 @@ buildscript {
     repositories {
         jcenter()
     }
-
     dependencies {
         classpath 'com.github.rodionmoiseev.gradle.plugins:idea-utils:0.2'
     }
@@ -18,13 +17,43 @@ group 'MMDBot'
 repositories {
     jcenter()
     maven {
+        url 'https://maven.mcmoddev.com'
+    }
+    maven {
         url 'https://jitpack.io'
     }
 }
 
 dependencies {
-    compile 'com.github.austinv11:Discord4j:f6f90c4'
+    compile 'com.github.austinv11:Discord4j:2.7.0'
     compile 'com.google.guava:guava:19.0'
     compile 'com.google.code.gson:gson:2.2.4'
-    compile "mysql:mysql-connector-java:5.1.39"
+    compile 'mysql:mysql-connector-java:5.1.48'
+}
+
+task fatJar(type: Jar) {
+	manifest {
+        attributes 'Implementation-Title': 'MMDBot', 'Implementation-Version': '1.0.0', 'Main-Class': 'com.mcmoddev.bot.MMDBot'
+    }
+    baseName = project.name + '-all'
+
+        from {
+        configurations.compile.collect {
+            it.isDirectory() ? it : zipTree(it).matching {
+                exclude 'META-INF/**.RSA'
+                exclude 'META-INF/MANIFEST.MF'
+                exclude 'META-INF/log4j-provider.properties'
+            } } }
+    with jar
+}
+
+build.dependsOn(fatJar)
+
+jar {
+  manifest {
+    attributes(
+      'Class-Path': configurations.compile.collect { it.getName() }.join(' '),
+      'Main-Class': 'com.mcmoddev.bot.MMDBot'
+    )
+  }
 }

@@ -16,6 +16,7 @@ import com.mcmoddev.bot.commands.staff.CmdUnmute;
 import com.mcmoddev.bot.commands.staff.CmdUser;
 import com.mcmoddev.bot.events.MiscEvents;
 import com.mcmoddev.bot.events.users.*;
+import com.mcmoddev.bot.helpers.dialog.DialogManager;
 import com.mcmoddev.bot.misc.BotConfig;
 import net.dv8tion.jda.api.AccountType;
 import net.dv8tion.jda.api.JDA;
@@ -59,6 +60,11 @@ public final class MMDBot {
 	private static BotConfig config; // = new BotConfig("mmdbot_config.json");
 
 	/**
+	 *
+	 */
+	private static DialogManager dialogManager = new DialogManager();
+
+	/**
 	 * @return The Bots configuration.
 	 */
 	public static BotConfig getConfig() {
@@ -75,6 +81,10 @@ public final class MMDBot {
 
 	public static JDA getInstance() {
 		return INSTANCE;
+	}
+
+	public static DialogManager getDialogManager() {
+		return dialogManager;
 	}
 
 	/**

@@ -3,6 +3,7 @@ package com.mcmoddev.bot;
 import com.google.gson.Gson;
 import com.jagrosh.jdautilities.command.CommandClient;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
+import com.mcmoddev.bot.commands.CmdCreateRequest;
 import com.mcmoddev.bot.commands.CmdPaste;
 import com.mcmoddev.bot.commands.CmdToggleMcServerPings;
 import com.mcmoddev.bot.commands.CmdXy;
@@ -14,6 +15,7 @@ import com.mcmoddev.bot.commands.search.CmdLmgtfy;
 import com.mcmoddev.bot.commands.staff.CmdMute;
 import com.mcmoddev.bot.commands.staff.CmdUnmute;
 import com.mcmoddev.bot.commands.staff.CmdUser;
+import com.mcmoddev.bot.events.EventPrivateMessageReceived;
 import com.mcmoddev.bot.events.MiscEvents;
 import com.mcmoddev.bot.events.users.*;
 import com.mcmoddev.bot.helpers.dialog.DialogManager;
@@ -120,6 +122,7 @@ public final class MMDBot {
 			botBuilder.addEventListeners(new EventRoleAdded());
 			botBuilder.addEventListeners(new EventRoleRemoved());
 			botBuilder.addEventListeners(new EventReactionAdded());
+			botBuilder.addEventListeners(new EventPrivateMessageReceived());
 			botBuilder.addEventListeners(new MiscEvents());
 
 			final CommandClientBuilder commandBuilder = new CommandClientBuilder();
@@ -143,6 +146,7 @@ public final class MMDBot {
 			commandBuilder.addCommand(new CmdForgeVersion());
 			commandBuilder.addCommand(new CmdMute());
 			commandBuilder.addCommand(new CmdUnmute());
+			commandBuilder.addCommand(new CmdCreateRequest());
 			commandBuilder.setHelpWord("help");
 
 			final CommandClient commandListener = commandBuilder.build();

@@ -3,12 +3,13 @@ package com.mcmoddev.bot.helpers.dialog;
 import com.mcmoddev.bot.MMDBot;
 import net.dv8tion.jda.api.entities.Message;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class DialogImpl implements IDialog {
 
-	protected List<DialogField> fields;
-	protected int currentField;
+	protected List<DialogField> fields = new ArrayList<>();
+	protected int currentField = 0;
 	protected IDialogFinishListener listener;
 
 	public DialogImpl(IDialogFinishListener listener) {
@@ -23,6 +24,11 @@ public class DialogImpl implements IDialog {
 	@Override
 	public boolean isDone() {
 		return currentField+1 < fields.size();
+	}
+
+	@Override
+	public String begin() {
+		return fields.get(currentField).prompt;
 	}
 
 	@Override

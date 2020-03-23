@@ -7,5 +7,6 @@ import java.util.List;
 public interface IDialog {
 	public List<DialogField> getFields();
 	public boolean isDone();
+	public String begin();
 	public String next(Message response);
 }

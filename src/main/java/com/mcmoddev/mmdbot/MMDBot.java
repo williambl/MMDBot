@@ -15,11 +15,16 @@ import com.mcmoddev.mmdbot.commands.info.CmdMinecraftVersion;
 import com.mcmoddev.mmdbot.commands.info.CmdPaste;
 import com.mcmoddev.mmdbot.commands.info.CmdSearch;
 import com.mcmoddev.mmdbot.commands.info.CmdXy;
+import com.mcmoddev.mmdbot.commands.info.fun.CmdCatFacts;
+import com.mcmoddev.mmdbot.commands.info.fun.CmdGreatMoves;
 import com.mcmoddev.mmdbot.commands.info.server.CmdGuild;
 import com.mcmoddev.mmdbot.commands.info.server.CmdMe;
 import com.mcmoddev.mmdbot.commands.info.server.CmdReadme;
 import com.mcmoddev.mmdbot.commands.info.server.CmdRoles;
 import com.mcmoddev.mmdbot.commands.info.server.CmdRules;
+import com.mcmoddev.mmdbot.commands.info.server.CmdToggleEventPings;
+import com.mcmoddev.mmdbot.commands.info.server.CmdToggleMcServerPings;
+import com.mcmoddev.mmdbot.commands.staff.CmdCommunityChannel;
 import com.mcmoddev.mmdbot.commands.staff.CmdMute;
 import com.mcmoddev.mmdbot.commands.staff.CmdUnmute;
 import com.mcmoddev.mmdbot.commands.staff.CmdUser;
@@ -42,11 +47,17 @@ import org.slf4j.LoggerFactory;
 import javax.security.auth.login.LoginException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.Set;
 
 /**
  * Our Main class.
+ *
+ * @author
+ *
  */
 public final class MMDBot {
 
@@ -58,8 +69,21 @@ public final class MMDBot {
 
     /**
      * The bots current version.
+     * <p>
+     * The version will be taken from the {@code Implementation-Version} attribute of the JAR manifest.
+     * If that is unavailable, the version shall be the combination of the string {@code "DEV "} and the the current
+     * date and time in {@link java.time.format.DateTimeFormatter#ISO_OFFSET_DATE_TIME}.
      */
-    public static final String VERSION = MMDBot.class.getPackage().getImplementationVersion();
+    public static final String VERSION;
+
+    // Gets the version from the JAR manifest, else defaults to the time the bot was started
+    static {
+        String version = MMDBot.class.getPackage().getImplementationVersion();
+        if (version == null) {
+            version = "DEV " + DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(OffsetDateTime.now(ZoneOffset.UTC));
+        }
+        VERSION = version;
+    }
 
     /**
      * The issue tracker where bugs and crashes should be reported, and PR's made.
@@ -70,17 +94,29 @@ public final class MMDBot {
      * Where needed for events being fired, errors and other misc stuff, log things to console using this.
      */
     public static final Logger LOGGER = LoggerFactory.getLogger(NAME);
-    private static final Set<GatewayIntent> intents = new HashSet<>();
-	private static BotConfig config;
-    private static JDA INSTANCE;
+
+    /**
+     *
+     */
+    private static final Set<GatewayIntent> INTENTS = new HashSet<>();
+
+    /**
+     *
+     */
+    private static BotConfig config;
+
+    /**
+     *
+     */
+    private static JDA instance;
 
     static {
-        intents.add(GatewayIntent.DIRECT_MESSAGES);
-        intents.add(GatewayIntent.GUILD_BANS);
-        intents.add(GatewayIntent.GUILD_EMOJIS);
-        intents.add(GatewayIntent.GUILD_MESSAGE_REACTIONS);
-        intents.add(GatewayIntent.GUILD_MESSAGES);
-        intents.add(GatewayIntent.GUILD_MEMBERS);
+        INTENTS.add(GatewayIntent.DIRECT_MESSAGES);
+        INTENTS.add(GatewayIntent.GUILD_BANS);
+        INTENTS.add(GatewayIntent.GUILD_EMOJIS);
+        INTENTS.add(GatewayIntent.GUILD_MESSAGE_REACTIONS);
+        INTENTS.add(GatewayIntent.GUILD_MESSAGES);
+        INTENTS.add(GatewayIntent.GUILD_MEMBERS);
     }
 
     /**
@@ -89,16 +125,21 @@ public final class MMDBot {
     private MMDBot() {
     }
 
-	/**
-	 * Returns the configuration of this bot.
-	 * @return The configuration of this bot
-	 */
-	public static BotConfig getConfig() {
-		return config;
-	}
+    /**
+     * Returns the configuration of this bot.
+     *
+     * @return The configuration of this bot.
+     */
+    public static BotConfig getConfig() {
+        return config;
+    }
 
-	public static JDA getInstance() {
-        return INSTANCE;
+    /**
+     *
+     * @return
+     */
+    public static JDA getInstance() {
+        return instance;
     }
 
     /**
@@ -108,14 +149,14 @@ public final class MMDBot {
         final Path configPath = Paths.get("mmdbot_config.toml");
         config = new BotConfig(configPath);
         if (config.isNewlyGenerated()) {
-        	LOGGER.warn("A new config file at {} has been generated. Please configure the bot and try again.", configPath);
-			System.exit(0);
-		} else if (config.getToken() == null) {
-        	LOGGER.error("No token is specified in the config. Please configure the bot and try again");
-		} else if (config.getGuildID() == 0L) {
-        	LOGGER.error("No guild ID is configured. Please configure the bot and try again.");
-        	System.exit(0);
-		}
+            LOGGER.warn("A new config file at {} has been generated. Please configure the bot and try again.", configPath);
+            System.exit(0);
+        } else if (config.getToken() == null) {
+            LOGGER.error("No token is specified in the config. Please configure the bot and try again");
+        } else if (config.getGuildID() == 0L) {
+            LOGGER.error("No guild ID is configured. Please configure the bot and try again.");
+            System.exit(0);
+        }
         Namespaces.INSTANCE.init(CmdMappings.Companion.getMappings());
 
         try {
@@ -147,9 +188,11 @@ public final class MMDBot {
                     .addCommand(new CmdFabricVersion())
                     .addCommand(new CmdMute())
                     .addCommand(new CmdUnmute())
-					.addCommand(new CmdMappings("yarnmappings", Namespaces.INSTANCE.get("yarn")))
-					.addCommand(new CmdMappings("mcpmappings", Namespaces.INSTANCE.get("mcp")))
-					.setHelpWord("help")
+                    .addCommand(new CmdCommunityChannel())
+                    .addCommand(new CmdGreatMoves())
+                    .addCommand(new CmdMappings("yarnmappings", Namespaces.INSTANCE.get("yarn")))
+                    .addCommand(new CmdMappings("mcpmappings", Namespaces.INSTANCE.get("mcp")))
+                    .setHelpWord("help")
                     .build();
 
             INSTANCE = JDABuilder

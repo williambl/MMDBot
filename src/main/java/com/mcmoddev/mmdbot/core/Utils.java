@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
@@ -44,10 +45,19 @@ import static com.mcmoddev.mmdbot.MMDBot.getConfig;
 
 /**
  *
+ * @author
+ *
  */
 public final class Utils {
 
+	/**
+	 *
+	 */
     public static final String STICKY_ROLES_FILE_PATH = "mmdbot_sticky_roles.json";
+
+    /**
+     *
+     */
     public static final String USER_JOIN_TIMES_FILE_PATH = "mmdbot_user_join_times.json";
 
     /**
@@ -72,12 +82,16 @@ public final class Utils {
             TimeUnit.SECONDS.sleep(2);
         } catch (final InterruptedException exception) {
             MMDBot.LOGGER.trace("InterruptedException", exception);
+            Thread.currentThread().interrupt();
         }
     }
 
     /**
      * Borrowed from Darkhax's BotBase, all credit for the below methods go to him.
      * The Bot Base repo and code is now deleted if you need it for reference Proxy has a copy. Dark may also have one.
+     *
+     * @param instant
+     * @return
      */
     public static LocalDateTime getLocalTime(final Instant instant) {
         return LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
@@ -127,6 +141,7 @@ public final class Utils {
      * @param guild        The guild we are currently in.
      * @return The guild member.
      */
+    @Nullable
     public static Member getMemberFromString(final String memberString, final Guild guild) {
         final Matcher matcher = Message.MentionType.USER.getPattern().matcher(memberString);
         if (matcher.matches()) {
@@ -162,9 +177,10 @@ public final class Utils {
      */
     @Nonnull
     public static List<Role> getOldUserRoles(final Guild guild, final Long userID) {
-        Map<String, List<String>> roles = getUserToRoleMap();
-        if (!roles.containsKey(userID.toString()))
+        final Map<String, List<String>> roles = getUserToRoleMap();
+        if (!roles.containsKey(userID.toString())) {
             return Collections.emptyList();
+        }
 
         return roles.get(userID.toString()).stream().map(guild::getRoleById).collect(Collectors.toList());
     }
@@ -179,14 +195,16 @@ public final class Utils {
      */
     public static void writeUserRoles(final Long userID, final List<Role> roles) {
         final File roleFile = new File(STICKY_ROLES_FILE_PATH);
-        Map<String, List<String>> userToRoleMap = getUserToRoleMap();
+        final Map<String, List<String>> userToRoleMap = getUserToRoleMap();
         userToRoleMap.put(userID.toString(), roles.stream().map(ISnowflake::getId).collect(Collectors.toList()));
         try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(roleFile), StandardCharsets.UTF_8)) {
             new Gson().toJson(userToRoleMap, writer);
         } catch (final FileNotFoundException exception) {
             MMDBot.LOGGER.error("An FileNotFound occurred saving sticky roles...", exception);
+            exception.printStackTrace();
         } catch (final IOException exception) {
             MMDBot.LOGGER.error("An IOException occurred saving sticky roles...", exception);
+            exception.printStackTrace();
         }
     }
 
@@ -196,14 +214,16 @@ public final class Utils {
     @Nonnull
     public static Map<String, List<String>> getUserToRoleMap() {
         final File roleFile = new File(STICKY_ROLES_FILE_PATH);
-        if (!roleFile.exists())
+        if (!roleFile.exists()) {
             return new HashMap<>();
+        }
         try (InputStreamReader reader = new InputStreamReader(new FileInputStream(roleFile), StandardCharsets.UTF_8)) {
-            Type typeOfHashMap = new TypeToken<Map<String, List<String>>>() {
+            final Type typeOfHashMap = new TypeToken<Map<String, List<String>>>() {
             }.getType();
             return new Gson().fromJson(reader, typeOfHashMap);
         } catch (final IOException exception) {
             MMDBot.LOGGER.trace("Failed to read sticky roles file...", exception);
+            exception.printStackTrace();
         }
         return new HashMap<>();
     }
@@ -216,14 +236,16 @@ public final class Utils {
      */
     public static void writeUserJoinTimes(final String userID, final Instant joinTime) {
         final File userJoinTimesFile = new File(USER_JOIN_TIMES_FILE_PATH);
-        Map<String, Instant> userJoinTimes = getUserJoinTimeMap();
+        final Map<String, Instant> userJoinTimes = getUserJoinTimeMap();
         userJoinTimes.put(userID, joinTime);
         try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(userJoinTimesFile), StandardCharsets.UTF_8)) {
             new Gson().toJson(userJoinTimes, writer);
         } catch (final FileNotFoundException exception) {
             MMDBot.LOGGER.error("An FileNotFound occurred saving user join times...", exception);
+            exception.printStackTrace();
         } catch (final IOException exception) {
             MMDBot.LOGGER.error("An IOException occurred saving user join times...", exception);
+            exception.printStackTrace();
         }
     }
 
@@ -233,14 +255,16 @@ public final class Utils {
     @Nonnull
     public static Map<String, Instant> getUserJoinTimeMap() {
         final File joinTimesFile = new File(USER_JOIN_TIMES_FILE_PATH);
-        if (!joinTimesFile.exists())
+        if (!joinTimesFile.exists()) {
             return new HashMap<>();
+        }
         try (InputStreamReader reader = new InputStreamReader(new FileInputStream(joinTimesFile), StandardCharsets.UTF_8)) {
-            Type typeOfHashMap = new TypeToken<Map<String, Instant>>() {
+        	final Type typeOfHashMap = new TypeToken<Map<String, Instant>>() {
             }.getType();
             return new Gson().fromJson(reader, typeOfHashMap);
         } catch (final IOException exception) {
             MMDBot.LOGGER.trace("Failed to read user join times file...", exception);
+            exception.printStackTrace();
         }
         return new HashMap<>();
     }
@@ -249,18 +273,18 @@ public final class Utils {
      * @param member The user.
      * @return The users join time.
      */
-    public static Instant getMemberJoinTime(Member member) {
+    public static Instant getMemberJoinTime(final Member member) {
         final Map<String, Instant> userJoinTimes = getUserJoinTimeMap();
         final String memberID = member.getId();
-        return userJoinTimes.containsKey(memberID) ?
-            userJoinTimes.get(memberID) :
-            member.getTimeJoined().toInstant();
+        return userJoinTimes.containsKey(memberID)
+            ? userJoinTimes.get(memberID)
+            : member.getTimeJoined().toInstant();
     }
 
-	/**
-	 * Checks if the command can run in the given context, and returns if it should continue running.
-	 * <p>
-	 * This does the following checks in order (checks prefixed with GUILD will only take effect when ran from a
+    /**
+     * Checks if the command can run in the given context, and returns if it should continue running.
+     * <p>
+     * This does the following checks in order (checks prefixed with GUILD will only take effect when ran from a
      * {@linkplain TextChannel guild channel}):
      * <ul>
      *     <li>GUILD; checks if the command is enabled in the guild.</li>
@@ -268,17 +292,26 @@ public final class Utils {
      *     <li>GUILD: checks if the command is blocked in the channel/category.</li>
      *     <li>GUILD: checks if the command is allowed in the channel/category.</li>
      * </ul>
-	 *
-	 * @param command The command
-	 * @param event The command event
-	 * @return If the command can run in that context
-	 */
-    public static boolean checkCommand(Command command, CommandEvent event) {
-        final String name = command.getName();
+     *
+     * @param command The command
+     * @param event   The command event
+     * @return If the command can run in that context
+     */
+    public static boolean checkCommand(final Command command, final CommandEvent event) {
 
         if (!isEnabled(command, event)) {
             // Could also send an informational message
             return false;
+        }
+
+        if (event.isFromType(ChannelType.TEXT)) {
+            final List<Long> exemptRoles = getConfig().getChannelExemptRoles();
+            if (event.getMember().getRoles().stream()
+                .map(ISnowflake::getIdLong)
+                .anyMatch(exemptRoles::contains)) {
+                // The member has a channel-checking-exempt role, bypass checking and allow the command
+                return true;
+            }
         }
 
         if (isBlocked(command, event)) {
@@ -289,29 +322,38 @@ public final class Utils {
         }
 
         if (event.isFromType(ChannelType.TEXT)) { // Sent from a guild
-            final long channelID = event.getChannel().getIdLong();
             final List<Long> allowedChannels = getConfig().getAllowedChannels(command.getName(), event.getGuild().getIdLong());
 
             if (allowedChannels.isEmpty()) { // If the allow list is empty, default allowed
                 return true;
             }
 
+            final long channelID = event.getChannel().getIdLong();
             @Nullable final Category category = event.getTextChannel().getParent();
             boolean allowed;
-            if (category != null) { // If there's a category, also check that
+            if (category == null) {
+                allowed = allowedChannels.stream().anyMatch(id -> id == channelID);
+            } else { // If there's a category, also check that
                 final long categoryID = category.getIdLong();
                 allowed = allowedChannels.stream()
                     .anyMatch(id -> id == channelID || id == categoryID);
-            } else {
-                allowed = allowedChannels.stream().anyMatch(id -> id == channelID);
             }
 
             if (!allowed) {
+                final List<Long> hiddenChannels = getConfig().getHiddenChannels();
                 final String allowedChannelStr = allowedChannels.stream()
+                    .filter(id -> !hiddenChannels.contains(id))
                     .map(id -> "<#" + id + ">")
                     .collect(Collectors.joining(", "));
+
+                final StringBuilder str = new StringBuilder(84)
+                    .append("This command cannot be run in this channel");
+                if (!allowedChannelStr.isEmpty()) {
+                    str.append(", only in ")
+                        .append(allowedChannelStr);
+                }
                 event.getChannel() // TODO: remove the allowed channel string?
-                    .sendMessage("This command cannot be run in this channel, only in " + allowedChannelStr + "!")
+                    .sendMessage(str.append("!"))
                     .queue();
                 return false;
             }
@@ -320,13 +362,26 @@ public final class Utils {
         return true;
     }
 
-    private static boolean isEnabled(Command command, CommandEvent event) {
-        if (event.isFromType(ChannelType.TEXT)) // Sent from a guild
+    /**
+     *
+     * @param command
+     * @param event
+     * @return
+     */
+    private static boolean isEnabled(final Command command, final CommandEvent event) {
+        if (event.isFromType(ChannelType.TEXT)) { // Sent from a guild
             return getConfig().isEnabled(command.getName(), event.getGuild().getIdLong());
+        }
         return getConfig().isEnabled(command.getName());
     }
 
-    private static boolean isBlocked(Command command, CommandEvent event) {
+    /**
+     *
+     * @param command
+     * @param event
+     * @return
+     */
+    private static boolean isBlocked(final Command command, final CommandEvent event) {
         if (event.isFromType(ChannelType.TEXT)) { // Sent from a guild
             final long channelID = event.getChannel().getIdLong();
             final List<Long> blockedChannels = getConfig().getBlockedChannels(command.getName(), event.getGuild().getIdLong());
@@ -339,5 +394,23 @@ public final class Utils {
             return blockedChannels.stream().anyMatch(id -> id == channelID);
         }
         return false; // If not from a guild, default not blocked
+    }
+
+    /**
+     * Calls the given consumer only if the channel with the given ID is present within the {@linkplain BotConfig#getGuildID() bot's guild}.
+     *
+     * @param channelID The channel ID
+     * @param consumer  The consumer of the channel
+     */
+    public static void getChannelIfPresent(final long channelID, final Consumer<TextChannel> consumer) {
+        final long guildID = getConfig().getGuildID();
+        final Guild guild = MMDBot.getInstance().getGuildById(guildID);
+        if (guild == null) {
+            return;
+        }
+        final TextChannel channel = guild.getTextChannelById(channelID);
+        if (channel != null) {
+            consumer.accept(channel);
+        }
     }
 }

@@ -11,6 +11,8 @@ import java.time.Instant;
 
 /**
  *
+ * @author
+ *
  */
 public final class CmdEventsHelp extends Command {
 
@@ -18,24 +20,26 @@ public final class CmdEventsHelp extends Command {
      *
      */
     private static final String IMAGE_URL =
-            "https://cdn.discordapp.com/attachments/665281306426474506/665605979798372392/eventhandler.png";
+        "https://cdn.discordapp.com/attachments/665281306426474506/665605979798372392/eventhandler.png";
 
     /**
      *
      */
     public CmdEventsHelp() {
         super();
-        name = "eventshelp";
-        aliases = new String[]{"events", "why-doesnt-my-event-handler-work"};
+        name = "events";
+        aliases = new String[]{"eventshelp", "why-doesnt-my-event-handler-work"};
         help = "Gives info on how to use forge event handlers.";
     }
 
     /**
-     *
+     * @param event The {@link CommandEvent CommandEvent} that triggered this Command.
      */
     @Override
     protected void execute(final CommandEvent event) {
-		if (!Utils.checkCommand(this, event)) return;
+        if (!Utils.checkCommand(this, event)) {
+            return;
+        }
         final EmbedBuilder embed = new EmbedBuilder();
         final TextChannel channel = event.getTextChannel();
 

@@ -2,9 +2,7 @@ package com.mcmoddev.mmdbot;
 
 import com.jagrosh.jdautilities.command.CommandClient;
 import com.jagrosh.jdautilities.command.CommandClientBuilder;
-import com.mcmoddev.mmdbot.commands.fun.CmdCatFacts;
-import com.mcmoddev.mmdbot.commands.fun.CmdToggleEventPings;
-import com.mcmoddev.mmdbot.commands.fun.CmdToggleMcServerPings;
+import com.mcmoddev.mmdbot.commands.info.fun.CmdCatFacts;
 import com.mcmoddev.mmdbot.commands.info.CmdBuild;
 import com.mcmoddev.mmdbot.commands.info.CmdEventsHelp;
 import com.mcmoddev.mmdbot.commands.info.CmdFabricVersion;
@@ -15,7 +13,6 @@ import com.mcmoddev.mmdbot.commands.info.CmdMinecraftVersion;
 import com.mcmoddev.mmdbot.commands.info.CmdPaste;
 import com.mcmoddev.mmdbot.commands.info.CmdSearch;
 import com.mcmoddev.mmdbot.commands.info.CmdXy;
-import com.mcmoddev.mmdbot.commands.info.fun.CmdCatFacts;
 import com.mcmoddev.mmdbot.commands.info.fun.CmdGreatMoves;
 import com.mcmoddev.mmdbot.commands.info.server.CmdGuild;
 import com.mcmoddev.mmdbot.commands.info.server.CmdMe;
@@ -195,8 +192,8 @@ public final class MMDBot {
                     .setHelpWord("help")
                     .build();
 
-            INSTANCE = JDABuilder
-                    .create(config.getToken(), intents)
+            instance = JDABuilder
+                    .create(config.getToken(), INTENTS)
                     .disableCache(CacheFlag.VOICE_STATE)
                     .disableCache(CacheFlag.ACTIVITY)
                     .disableCache(CacheFlag.CLIENT_STATUS)

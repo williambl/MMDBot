@@ -17,48 +17,40 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
  * The configuration holder for the bot.
  *
- * @author
- *
+ * @author sciwhiz12
  */
 public final class BotConfig {
 
     /**
-     *
-     */
-    private static final String COMMUNITY_CHANNEL_OWNER_PERMISSIONS = "community_channels.owner_permissions";
-
-    /**
-    *
-    */
-   private static final String COMMANDS_PREFIX = "commands.";
-
-   /**
-     *
+     * The Config.
      */
     private final CommentedFileConfig config;
 
     /**
-     *
+     * The Newly generated.
      */
     private boolean newlyGenerated;
 
     /**
+     * Instantiates a new Bot config.
      *
-     * @param configFile
+     * @param configFile the config file
      */
     public BotConfig(final Path configFile) {
         this(configFile, TomlFormat.instance());
     }
 
     /**
+     * Instantiates a new Bot config.
      *
-     * @param configFile
-     * @param configFormat
+     * @param configFile   the config file
+     * @param configFormat the config format
      */
     public BotConfig(final Path configFile, final ConfigFormat<? extends CommentedConfig> configFormat) {
         this.newlyGenerated = false;
@@ -67,7 +59,8 @@ public final class BotConfig {
             .onFileNotFound((file, format) -> {
                 this.newlyGenerated = true;
                 //noinspection UnstableApiUsage
-                return FileNotFoundAction.copyData(Resources.getResource("default-config.toml")).run(file, format);
+                return FileNotFoundAction.copyData(Resources.getResource("default-config.toml"))
+                    .run(file, format);
             })
             .preserveInsertionOrder()
             .build();
@@ -101,7 +94,7 @@ public final class BotConfig {
     public String getToken() {
         return config.<String>getOptional("bot.token")
             .filter(string -> string.indexOf('!') == -1 || string.isEmpty())
-            .orElse(null);
+            .orElse("");
     }
 
     /**
@@ -136,8 +129,8 @@ public final class BotConfig {
     /**
      * Returns the alternative commands prefix for bot commands.
      * <p>
-     * This will usually be a shorter version of the {@linkplain #getMainPrefix() main commands prefix}, to be easier and
-     * quicker to type out commands.
+     * This will usually be a shorter version of the {@linkplain #getMainPrefix() main commands prefix}, to be easier
+     * and quicker to type out commands.
      *
      * @return The alternative commands prefix
      */
@@ -180,10 +173,10 @@ public final class BotConfig {
      *
      * @param commandName The command name
      * @return If the command is globally enabled, or {@code true} if not configured
-     * @see #isEnabled(String, long)
+     * @see #isEnabled(String, long) #isEnabled(String, long)#isEnabled(String, long)
      */
     public boolean isEnabled(final String commandName) {
-        return config.<Boolean>getOrElse(COMMANDS_PREFIX + commandName + ".enabled", true);
+        return config.<Boolean>getOrElse(References.COMMANDS + commandName + ".enabled", true);
     }
 
     /**
@@ -198,7 +191,7 @@ public final class BotConfig {
      */
     public boolean isEnabled(final String commandName, final long guildID) {
         return config.<Boolean>getOptional(
-            COMMANDS_PREFIX + commandName + "."
+            References.COMMANDS + commandName + "."
                 + getAlias(guildID).orElseGet(() -> String.valueOf(guildID))
                 + ".enabled")
             .orElseGet(() -> isEnabled(commandName));
@@ -213,7 +206,7 @@ public final class BotConfig {
      */
     public List<Long> getBlockedChannels(final String commandName, final long guildID) {
         return getAliasedSnowflakeList(
-            COMMANDS_PREFIX + commandName + "."
+            References.COMMANDS + commandName + "."
                 + getAlias(guildID).orElseGet(() -> String.valueOf(guildID))
                 + ".blocked_channels", getAliases())
             .orElseGet(Collections::emptyList);
@@ -228,7 +221,7 @@ public final class BotConfig {
      */
     public List<Long> getAllowedChannels(final String commandName, final long guildID) {
         return getAliasedSnowflakeList(
-            COMMANDS_PREFIX + commandName + "."
+            References.COMMANDS + commandName + "."
                 + getAlias(guildID).orElseGet(() -> String.valueOf(guildID))
                 + ".allowed_channels", getAliases())
             .orElseGet(Collections::emptyList);
@@ -237,24 +230,26 @@ public final class BotConfig {
     /**
      * Returns the list of hidden channels.
      * <p>
-     * Hidden channels are channels which are not printed / hidden from the message when a command is run in a non-allowed channel.
+     * Hidden channels are channels which are not printed / hidden from the message when a command is run
+     * in a non-allowed channel.
      *
      * @return The list of hidden channels
      */
     public List<Long> getHiddenChannels() {
-        return getAliasedSnowflakeList("commands.hidden_channels", getAliases())
+        return getAliasedSnowflakeList(References.COMMANDS + "hidden_channels", getAliases())
             .orElseGet(Collections::emptyList);
     }
 
     /**
      * Returns the list of roles exempt from the blocklists and allowlists of commands.
      * <p>
-     * Users with these roles bypass the block and allow lists of commands, allowing them to run (enabled) commands in any channel.
+     * Users with these roles bypass the block and allow lists of commands, allowing them to run (enabled) commands
+     * in any channel.
      *
      * @return The roles exempt from channel checking
      */
     public List<Long> getChannelExemptRoles() {
-        return getAliasedSnowflakeList("commands.exempt_roles", getAliases())
+        return getAliasedSnowflakeList(References.COMMANDS + "exempt_roles", getAliases())
             .orElseGet(Collections::emptyList);
     }
 
@@ -272,7 +267,7 @@ public final class BotConfig {
     }
 
     /**
-     * Returns the snowflake ID of the given channel key based on the configuration, or {@code 0L} if none is configured.
+     * Returns the snowflake ID of the given channel based on the configuration, or {@code 0L} if none is configured.
      * <p>
      * The channel key consists of ASCII letters, optionally separated by periods/full stops ({@code .}) for connoting
      * categories.
@@ -373,20 +368,21 @@ public final class BotConfig {
     }
 
     /**
+     * Gets community channel owner permissions.
      *
-     * @return
+     * @return Set. community channel owner permissions
      */
     @SuppressWarnings("unchecked")
-    public EnumSet<Permission> getCommunityChannelOwnerPermissions() {
-        if (!config.contains(COMMUNITY_CHANNEL_OWNER_PERMISSIONS)) {
+    public Set<Permission> getCommunityChannelOwnerPermissions() {
+        if (!config.contains(References.COMMUNITY_CHANNEL_OWNER_PERMISSIONS)) {
             return EnumSet.noneOf(Permission.class);
         }
-        final Object obj = config.get(COMMUNITY_CHANNEL_OWNER_PERMISSIONS);
+        final Object obj = config.get(References.COMMUNITY_CHANNEL_OWNER_PERMISSIONS);
         if (obj instanceof Number) {
             return Permission.getPermissions(((Number) obj).longValue());
         } else if (obj instanceof List) {
-        	final List<String> permList = ((List<String>) obj);
-        	final EnumSet<Permission> permissions = EnumSet.noneOf(Permission.class);
+            final List<String> permList = ((List<String>) obj);
+            final EnumSet<Permission> permissions = EnumSet.noneOf(Permission.class);
             outer:
             for (final String perm : permList) {
                 for (final Permission permission : Permission.values()) {
@@ -395,36 +391,26 @@ public final class BotConfig {
                         continue outer;
                     }
                 }
-                MMDBot.LOGGER.warn("Unknown permission in \"{}\": '{}'", COMMUNITY_CHANNEL_OWNER_PERMISSIONS, perm);
+                MMDBot.LOGGER.warn("Unknown permission in \"{}\": '{}'",
+                    References.COMMUNITY_CHANNEL_OWNER_PERMISSIONS, perm);
             }
             return permissions;
         }
-        MMDBot.LOGGER.warn("Unknown format of \"{}\", resetting to blank list", COMMUNITY_CHANNEL_OWNER_PERMISSIONS);
-        config.set(COMMUNITY_CHANNEL_OWNER_PERMISSIONS, Collections.emptyList());
+        MMDBot.LOGGER.warn("Unknown format of \"{}\", resetting to blank list",
+            References.COMMUNITY_CHANNEL_OWNER_PERMISSIONS);
+        config.set(References.COMMUNITY_CHANNEL_OWNER_PERMISSIONS, Collections.emptyList());
         return EnumSet.noneOf(Permission.class);
     }
 
     /**
+     * Gets aliased snowflake list.
      *
-     * @param path
-     * @return
+     * @param path    the path
+     * @param aliases the aliases
+     * @return List. aliased snowflake list
      */
-    private Optional<List<Long>> getSnowflakeList(final String path) {
-        return config.<List<String>>getOptional(path)
-            .map(strings -> strings.stream()
-                .map(SafeIdUtil::safeConvert)
-                .filter(snowflake -> snowflake != 0)
-                .collect(Collectors.toList()));
-    }
-
-    /**
-     *
-     * @param path
-     * @param aliases
-     * @return
-     */
-    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    private Optional<List<Long>> getAliasedSnowflakeList(final String path, final Optional<UnmodifiableConfig> aliases) {
+    private Optional<List<Long>> getAliasedSnowflakeList(final String path,
+                                                         final Optional<UnmodifiableConfig> aliases) {
         return config.<List<String>>getOptional(path)
             .filter(list -> !list.isEmpty())
             .map(strings -> strings.stream()
@@ -435,15 +421,24 @@ public final class BotConfig {
     }
 
     /**
+     * Gets aliased.
      *
-     * @param key
-     * @param aliases
-     * @return
+     * @param key     the key
+     * @param aliases the aliases
+     * @return String. aliased
      */
-    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private String getAliased(final String key, final Optional<UnmodifiableConfig> aliases) {
         return config.<String>getOptional(key)
             .map(str -> aliases.flatMap(cfg -> cfg.<String>getOptional(str)).orElse(str))
             .orElse("");
+    }
+
+    /**
+     * A boolean check to enable or disable commands in production in case of issues or in dev should we not need them.
+     *
+     * @return true or false.
+     */
+    public boolean isCommandModuleEnabled() {
+        return config.<Boolean>getOrElse("modules.command_module_enabled", true);
     }
 }

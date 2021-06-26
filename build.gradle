@@ -7,13 +7,33 @@ plugins {
     id 'checkstyle'
     id 'pmd'
     id "org.jetbrains.kotlin.jvm" version "1.4.21"
+    id "org.flywaydb.flyway" version "7.10.0"
 }
 
 mainClassName = 'com.mcmoddev.mmdbot.MMDBot'
 group 'com.mcmoddev'
 version project.bot_version
 
-sourceCompatibility = targetCompatibility = JavaVersion.VERSION_1_8
+java.toolchain.languageVersion = JavaLanguageVersion.of(11)
+
+application {
+    mainClass = 'com.mcmoddev.mmdbot.MMDBot'
+}
+
+compileJava {
+  sourceCompatibility = targetCompatibility = JavaVersion.VERSION_11
+  options.encoding = 'UTF-8'
+}
+
+tasks.withType(JavaCompile) {
+  options.encoding = 'UTF-8'
+  options.compilerArgs = [
+    '-Xlint:deprecation', // deprecation, rawtypes, cast, unchecked, all
+    //'-Xdiags:verbose',
+    //'-Werror'
+  ]
+  compileJava.options.compilerArgs += '-proc:none'
+}
 
 repositories {
     jcenter()
@@ -43,31 +63,32 @@ dependencies {
     implementation "me.shedaniel:linkie-core:1.0.60"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.4.21"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.1"
-
-    testImplementation "org.junit.jupiter:junit-jupiter:5.7.0"
-
-    spotbugsPlugins 'com.h3xstream.findsecbugs:findsecbugs-plugin:1.11.0'
+    implementation group: 'org.xerial', name: 'sqlite-jdbc', version: "${project.sqlite_jdbc_version}"
+    
+    testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter', version: "${project.junit_version}"
+    
+    spotbugsPlugins "com.h3xstream.findsecbugs:findsecbugs-plugin:${project.findsecbugs_version}"
 }
 
 jar {
-    manifest {
-        mainAttributes(
-                "Maven-Artifact": "${project.group}:${archivesBaseName}:${project.bot_version}",
-                "Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
-                "Specification-Title": archivesBaseName,
-                "Specification-Vendor": "MinecraftModDevs",
-                "Specification-Version": "1",
-                "Implementation-Title": archivesBaseName,
-                "Implementation-Version": "${project.bot_version}",
-                "Implementation-Vendor": "MinecraftModDevs",
-                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
-                "Built-On-Java": "${System.getProperty('java.vm.version')} (${System.getProperty('java.vm.vendor')})",
-                "Built-On": "${project.jda_version}-${project.jdautils_version}"
-        )
-    }
+  manifest {
+    mainAttributes(
+      'Maven-Artifact': "${project.group}:${archivesBaseName}:${project.bot_version}",
+      'Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+      'Specification-Title': archivesBaseName,
+      'Specification-Vendor': "MinecraftModDevs",
+      'Specification-Version': "1",
+      'Implementation-Title': archivesBaseName,
+      'Implementation-Version': "${project.bot_version}",
+      'Implementation-Vendor': "MinecraftModDevs",
+      'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+      'Built-On-Java': "${System.getProperty('java.vm.version')} (${System.getProperty('java.vm.vendor')})",
+      'Built-On': "${project.jda_version}-${project.jdautils_version}",
+      'Class-Path': configurations.compileClasspath.collect { it.getName() }.join(' '),
+      'Main-Class': 'com.mcmoddev.bot.MMDBot'
+    )
+  }
 }
-
-compileJava.options.encoding = 'UTF-8'
 
 eclipse.project {
   buildCommand 'org.eclipse.buildship.core.gradleprojectbuilder'
@@ -76,7 +97,7 @@ eclipse.project {
 
 idea.module {
   downloadJavadoc = true
-  //inheritOutputDirs = true
+  inheritOutputDirs = true
 }
 
 javadoc {
@@ -84,9 +105,35 @@ javadoc {
 }
 
 test {
-    useJUnitPlatform()
-    testLogging {
-        events "passed", "skipped", "failed"
+  useJUnitPlatform()
+  testLogging {
+    events "passed", "skipped", "failed"
+  }
+}
+
+flyway {
+  url = 'jdbc:sqlite:./data.db'
+  user = 'sa'
+}
+
+task generatePom {
+    doLast {
+        pom {
+            project {
+                groupId project.group.toString()
+                artifactId archivesBaseName
+                version version
+
+                inceptionYear '2016'
+                licenses {
+                    license {
+                        name 'LGPL2.1 License'
+                        url 'LGPL2.1'
+                        distribution 'repo'
+                    }
+                }
+            }
+        }.writeTo("$rootProject.projectDir/pom.xml")
     }
 }
 
@@ -108,8 +155,17 @@ tasks.withType(com.github.spotbugs.snom.SpotBugsTask) {
 
 checkstyle {
   ignoreFailures = true
-  toolVersion = '8.42'
+  toolVersion = '8.43'
   showViolations = false
+}
+
+tasks.withType(Checkstyle) {
+  reports {
+    xml.enabled true
+    html.enabled true
+//  html.stylesheet resources.text.fromFile('config/xsl/checkstyle-noframes.xsl') // Default
+    html.stylesheet resources.text.fromFile('config/xsl/checkstyle-noframes-severity-sorted.xsl')
+  }
 }
 
 pmd {
@@ -121,32 +177,32 @@ pmd {
   ruleSetFiles = files('config/pmd/pmd.xml')
   ruleSets = [
 /*
-//    'java-android',
+//  'java-android',
     'java-basic',
     'java-braces',
     'java-clone',
-//    'java-codesize',
-//    'java-comments',
-//    'java-controversial',
-//    'java-coupling',
+//  'java-codesize',
+//  'java-comments',
+//  'java-controversial',
+//  'java-coupling',
     'java-design',
     'java-empty',
     'java-finalizers',
     'java-imports',
-//    'java-j2ee',
-//    'java-javabeans',
+//  'java-j2ee',
+//  'java-javabeans',
     'java-junit',
     'java-logging-jakarta-commons',
     'java-logging-java',
-//    'java-metrics', // Upsets 5.8.1
+//  'java-metrics', // Upsets 5.8.1
     'java-migrating',
-//    'java-migrating_to_13',
-//    'java-migrating_to_14',
-//    'java-migrating_to_15',
+//  'java-migrating_to_13',
+//  'java-migrating_to_14',
+//  'java-migrating_to_15',
     'java-migrating_to_junit4',
     'java-naming',
     'java-optimizations',
-//    'java-quickstart', // 6.x
+//  'java-quickstart', // 6.x
     'java-strictexception',
     'java-strings',
     'java-sunsecure',
@@ -155,6 +211,6 @@ pmd {
     'java-unusedcode'
 */
   ]
-  toolVersion = '6.34.0' // 5.8.1
+  toolVersion = '6.35.0'
   incrementalAnalysis = true
 }

@@ -3,8 +3,6 @@ package com.mcmoddev.mmdbot.events.users;
 import com.mcmoddev.mmdbot.core.Utils;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.audit.ActionType;
-import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.guild.member.update.GuildMemberUpdateNicknameEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
@@ -13,21 +11,23 @@ import java.time.Instant;
 
 import static com.mcmoddev.mmdbot.MMDBot.LOGGER;
 import static com.mcmoddev.mmdbot.MMDBot.getConfig;
-import static com.mcmoddev.mmdbot.logging.MMDMarkers.EVENTS;
+import static com.mcmoddev.mmdbot.utilities.console.MMDMarkers.EVENTS;
 
 /**
+ * The type Event nickname changed.
  *
  * @author
- *
  */
 public final class EventNicknameChanged extends ListenerAdapter {
 
     /**
+     * On guild member update nickname.
      *
+     * @param event the event
      */
     @Override
     public void onGuildMemberUpdateNickname(final GuildMemberUpdateNicknameEvent event) {
-        final Guild guild = event.getGuild();
+        final var guild = event.getGuild();
 
         if (getConfig().getGuildID() != guild.getIdLong()) {
             return; // Make sure that we don't post if it's not related to 'our' guild
@@ -41,19 +41,22 @@ public final class EventNicknameChanged extends ListenerAdapter {
                 .cache(false)
                 .map(list -> list.get(0))
                 .flatMap(entry -> {
-                    final EmbedBuilder embed = new EmbedBuilder();
-                    final User target = event.getUser();
+                    final var embed = new EmbedBuilder();
+                    final var target = event.getUser();
 
                     embed.setColor(Color.YELLOW);
                     embed.setTitle("Nickname Changed");
                     embed.setThumbnail(target.getEffectiveAvatarUrl());
-                    embed.addField("User:", target.getAsMention() + " (" + target.getId() + ")", true);
+                    embed.addField("User:", target.getAsMention() + " (" + target.getId() + ")",
+                        true);
                     embed.setTimestamp(Instant.now());
                     if (entry.getTargetIdLong() != target.getIdLong()) {
-                        LOGGER.warn(EVENTS, "Inconsistency between target of retrieved audit log entry and actual nickname event target: retrieved is {}, but target is {}", target, entry.getUser());
+                        LOGGER.warn(EVENTS, "Inconsistency between target of retrieved audit log entry and actual "
+                            + "nickname event target: retrieved is {}, but target is {}", target, entry.getUser());
                     } else if (entry.getUser() != null) {
-                        final User editor = entry.getUser();
-                        embed.addField("Nickname Editor:", editor.getAsMention() + " (" + editor.getId() + ")", true);
+                        final var editor = entry.getUser();
+                        embed.addField("Nickname Editor:", editor.getAsMention() + " ("
+                            + editor.getId() + ")", true);
                         embed.addBlankField(true);
                     }
                     final String oldNick = event.getOldNickname() == null ? target.getName() : event.getOldNickname();
@@ -61,9 +64,10 @@ public final class EventNicknameChanged extends ListenerAdapter {
                     embed.addField("Old Nickname:", oldNick, true);
                     embed.addField("New Nickname:", newNick, true);
 
-                    LOGGER.info(EVENTS, "User {} changed nickname from `{}` to `{}`, by {}", target, oldNick, newNick, entry.getUser());
+                    LOGGER.info(EVENTS, "User {} changed nickname from `{}` to `{}`, by {}", target, oldNick, newNick,
+                        entry.getUser());
 
-                    return channel.sendMessage(embed.build());
+                    return channel.sendMessageEmbeds(embed.build());
                 })
                 .queue()
         );

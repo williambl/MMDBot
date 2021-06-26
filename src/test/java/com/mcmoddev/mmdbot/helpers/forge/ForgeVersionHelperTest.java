@@ -1,8 +1,8 @@
 package com.mcmoddev.mmdbot.helpers.forge;
 
-import com.mcmoddev.mmdbot.updatenotifiers.forge.ForgeVersion;
-import com.mcmoddev.mmdbot.updatenotifiers.forge.ForgeVersionHelper;
-import com.mcmoddev.mmdbot.updatenotifiers.forge.VersionMeta;
+import com.mcmoddev.mmdbot.utilities.updatenotifiers.forge.ForgeVersion;
+import com.mcmoddev.mmdbot.utilities.updatenotifiers.forge.ForgeVersionHelper;
+import com.mcmoddev.mmdbot.utilities.updatenotifiers.forge.VersionMeta;
 
 import org.junit.jupiter.api.Test;
 
@@ -32,8 +32,8 @@ class ForgeVersionHelperTest {
     @Test
     void parseVersion() {
         final VersionMeta vMeta = ForgeVersionHelper.getMCVersion("1.7.10-latest");
-        assertEquals(vMeta.state, "latest");
-        assertEquals(vMeta.version, ONE_SEVEN_TEN);
+        assertEquals(vMeta.getState(), "latest");
+        assertEquals(vMeta.getVersion(), ONE_SEVEN_TEN);
     }
 
     /**
